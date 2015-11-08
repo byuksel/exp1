@@ -417,8 +417,12 @@ Raphael.el.findAllInteractions = function() {
       } else {
         var k = me.paper.point(interXY.x, interXY.y);
         k.touchingElements.push(me);
-        me.__intersectpoints__.push(k);
+        k.touchingElements.push(el);
+        me.paper.pushIfUnique(me.__intersectpoints__, k);
+        me.paper.pushIfUnique(el.__intersectpoints__, k);
       }
+      me.__intersectpoints__.sort(Raphael.sortByXY);
+      el.__intersectpoints__.sort(Raphael.sortByXY);
      });
   });
 };
@@ -467,7 +471,7 @@ Raphael.closestPivot = function(pivot, candidates) {
 };
 
 Raphael.el.invisible = function() {
-  this.attr('opacity', 0);
+  this.attr('opacity', this.paper.elementOpacity);
 };
 Raphael.st.invisible = function () {
   this.forEach(function (el) {
@@ -478,14 +482,13 @@ Raphael.st.invisible = function () {
 
 
 function patternOne(paper, sqTile) {
+  paper.elementOpacity = 0.0;
   var c0 = paper.circle(sqTile.x_center, sqTile.y_center, sqTile.radius);
   var topX = sqTile.topX;
   var topY = sqTile.topY;
   var bottomX = sqTile.bottomX;
   var bottomY = sqTile.bottomY;
   var radius = sqTile.radius;
-
-  var pivot0 = paper.pivot(topX, topY);
 
   var l4 = paper.line(topX, topY, bottomX, topY);
   var l3 = paper.line(topX, topY, topX, bottomY);
@@ -511,19 +514,18 @@ function patternOne(paper, sqTile) {
   var e6 = paper.extendedLine(sqTile, firstElems[1], southElems[0]);
   var e7 = paper.extendedLine(sqTile, firstElems[0], northElems[0]);
   // Now do the actual pattern
-  console.log(e0);
   firstElems = e0.__intersectpoints__.sort(Raphael.sortByXY);
-  paper.boldLine(firstElems[0], firstElems[3]);
-  paper.boldLine(firstElems[4], firstElems[6]);
+  paper.boldLine(firstElems[0], firstElems[4]);
+  paper.boldLine(firstElems[5], firstElems[7]);
   firstElems = e1.__intersectpoints__.sort(Raphael.sortByXY);
-  paper.boldLine(firstElems[0], firstElems[1]);
-  paper.boldLine(firstElems[2], firstElems[5]);
-  firstElems = e2.__intersectpoints__.sort(Raphael.sortByXY);
   paper.boldLine(firstElems[0], firstElems[2]);
-  paper.boldLine(firstElems[3], firstElems[6]);
-  firstElems = e3.__intersectpoints__.sort(Raphael.sortByXY);
+  paper.boldLine(firstElems[3], firstElems[7]);
+  firstElems = e2.__intersectpoints__.sort(Raphael.sortByXY);
   paper.boldLine(firstElems[0], firstElems[3]);
-  paper.boldLine(firstElems[4], firstElems[5]);
+  paper.boldLine(firstElems[4], firstElems[8]);
+  firstElems = e3.__intersectpoints__.sort(Raphael.sortByXY);
+  paper.boldLine(firstElems[0], firstElems[4]);
+  paper.boldLine(firstElems[5], firstElems[7]);
   firstElems = e4.__intersectpoints__.sort(Raphael.sortByXY);
   paper.boldLine(firstElems[0], firstElems[4]);
   paper.boldLine(firstElems[5], firstElems[7]);
@@ -566,14 +568,143 @@ function patternOne(paper, sqTile) {
     partialPaths.forEach(function(elem) { elem.remove();});
     major.animate({transform: 'r45,10,10s1,1,100,100r45s0.5t-18,-99'},
                   1000, function () {
-                    major.clone().transform('s0.5T0,0');
-                    major.clone().transform('s0.5T-190,0');
-                    major.clone().transform('s0.5T190,0');
-                    major.clone().transform('s0.5T0,190');
-                    major.clone().transform('s0.5T190,190');
-                    major.clone().transform('s0.5T190,-190');
-                    major.clone().transform('s0.5T-190,-190');
-                    major.clone().transform('s0.5T0,-190');
+                    major.animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T0,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-190,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T190,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T0,190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T190,190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T190,-190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-190,-190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T0,-190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 20, "stroke-opacity": 0.5}, 2000);
+                  });
+  };
+
+
+  var animBold = function() {
+    if (animateLength < 1.0) {
+      animateLength += 0.05;
+      var subpath = major.getSubpath(0, animateLength * majorLen);
+      partialPaths.push(paper.path(subpath).attr('stroke', 'red').attr('stroke-width', 3));
+      setTimeout(animBold, 200);
+    } else {
+      lines.animate({opacity: 0}, 1000, finalAnimation);
+    };
+  };
+  animLines();
+  return 0;
+};
+
+function patternTwo(paper, sqTile) {
+  paper.elementOpacity = 0.0;
+  var c0 = paper.circle(sqTile.x_center, sqTile.y_center, sqTile.radius);
+  var topX = sqTile.topX;
+  var topY = sqTile.topY;
+  var bottomX = sqTile.bottomX;
+  var bottomY = sqTile.bottomY;
+  var radius = sqTile.radius;
+
+
+
+  var l4 = paper.line(topX, topY, bottomX, topY);
+  var l3 = paper.line(topX, topY, topX, bottomY);
+  var l0 = paper.line(topX, topY, bottomX, bottomY);
+  var l1 = paper.line(bottomX, topY, bottomX, bottomY);
+  var l2 = paper.line(bottomX, topY, topX, bottomY);
+  var l5 = paper.line(topX, bottomY, bottomX, bottomY);
+  paper.line(topX + radius, topY, topX + radius, bottomY);
+  paper.line(topX, topY + radius, bottomX, topY + radius);
+
+  var firstElems = l0.getIntersection(c0);
+  var secondElems = l2.getIntersection(c0);
+  var westElems = l1.getIntersection(c0);
+  var eastElems = l3.getIntersection(c0);
+  var northElems = l4.getIntersection(c0);
+  var southElems = l5.getIntersection(c0);
+  var e0 = paper.extendedLine(sqTile, firstElems[0], eastElems[0]);
+  var e1 = paper.extendedLine(sqTile, secondElems[1], westElems[0]);
+  var e2 = paper.extendedLine(sqTile, secondElems[1], northElems[0]);
+  var e3 = paper.extendedLine(sqTile, firstElems[1], southElems[0]);
+  // Seconds
+  var e4 = paper.extendedLine(sqTile, secondElems[0], eastElems[0]);
+  var e5 = paper.extendedLine(sqTile, firstElems[1], westElems[0]);
+  var e6 = paper.extendedLine(sqTile, firstElems[0], northElems[0]);
+  var e7 = paper.extendedLine(sqTile, secondElems[0], southElems[0]);
+  // Thirds
+  var j0 = paper.line(eastElems[0], northElems[0]);
+  var j1 = paper.line(eastElems[0], southElems[0]);
+  var j2 = paper.line(westElems[0], northElems[0]);
+  var j3 = paper.line(westElems[0], southElems[0]);
+  var j4 = paper.line(firstElems[0], secondElems[0]);
+  var j5 = paper.line(firstElems[0], secondElems[1]);
+  var j6 = paper.line(firstElems[1], secondElems[0]);
+  var j7 = paper.line(firstElems[1], secondElems[1]);
+  var t0 = paper.extendedLine(sqTile, j0.__intersectpoints__[1], j3.__intersectpoints__[1]);
+  var t1 = paper.extendedLine(sqTile, j1.__intersectpoints__[1], j2.__intersectpoints__[1]);
+  var t2 = paper.extendedLine(sqTile, j0.__intersectpoints__[3], j3.__intersectpoints__[3]);
+  var t3 = paper.extendedLine(sqTile, j1.__intersectpoints__[3], j2.__intersectpoints__[3]);
+  var t4 = paper.extendedLine(sqTile, j0.__intersectpoints__[1], j2.__intersectpoints__[3]);
+  var t5 = paper.extendedLine(sqTile, j1.__intersectpoints__[1], j3.__intersectpoints__[3]);
+  var t6 = paper.extendedLine(sqTile, j0.__intersectpoints__[3], j1.__intersectpoints__[3]);
+  var t7 = paper.extendedLine(sqTile, j3.__intersectpoints__[1], j3.__intersectpoints__[1]);
+  // Bold action
+  paper.boldLine(e7.__intersectpoints__[0], e7.__intersectpoints__[3]);
+  paper.boldLine(e7.__intersectpoints__[4], e7.__intersectpoints__[5]);
+  paper.boldLine(e6.__intersectpoints__[0], e6.__intersectpoints__[3]);
+  paper.boldLine(e6.__intersectpoints__[4], e6.__intersectpoints__[5]);
+  paper.boldLine(e5.__intersectpoints__[0], e5.__intersectpoints__[3]);
+  paper.boldLine(e5.__intersectpoints__[4], e5.__intersectpoints__[5]);
+  paper.boldLine(e4.__intersectpoints__[0], e4.__intersectpoints__[1]);
+  paper.boldLine(e4.__intersectpoints__[2], e4.__intersectpoints__[5]);
+  paper.boldLine(e3.__intersectpoints__[0], e3.__intersectpoints__[2]);
+  paper.boldLine(e3.__intersectpoints__[3], e3.__intersectpoints__[6]);
+  paper.boldLine(e2.__intersectpoints__[0], e2.__intersectpoints__[1]);
+  paper.boldLine(e2.__intersectpoints__[2], e2.__intersectpoints__[5]);
+  paper.boldLine(e1.__intersectpoints__[0], e1.__intersectpoints__[3]);
+  paper.boldLine(e1.__intersectpoints__[4], e1.__intersectpoints__[6]);
+  paper.boldLine(e0.__intersectpoints__[0], e0.__intersectpoints__[2]);
+  paper.boldLine(e0.__intersectpoints__[3], e0.__intersectpoints__[6]);
+  // Bold action 2
+  var innerAr = [t0, t1, t2, t3, t4, t5, t6, t7];
+  innerAr.forEach(function(elem) {
+    paper.boldLine(elem.__intersectpoints__[2], elem.__intersectpoints__[5]);
+    paper.boldLine(elem.__intersectpoints__[7], elem.__intersectpoints__[10]);
+  });
+  // Now the animation and show part
+  var lines = paper.set();
+  paper.__circles__.forEach(function(elem) {
+    lines.push(elem);
+  });
+  var animateIndex = 0;
+  var animLines = function() {
+    if (animateIndex < paper.__circles__.length) {
+      paper.__circles__[animateIndex++].animate({ opacity: '1'}, 200, animLines);
+    } else {
+      animBold();
+    }
+  };
+  var allPaths = '';
+  paper.__boldlines__.forEach(function(elem) {
+    allPaths += elem.getActualPathString();
+  });
+  var major = paper.path(allPaths).hide();
+  var majorLen = major.getTotalLength();
+  var animateLength = 0;
+  var partialPaths = paper.set();
+  var finalAnimation = function() {
+    major.attr('stroke', 'red').attr('stroke-width', 3).show();
+    partialPaths.forEach(function(elem) { elem.remove();});
+    major.animate({transform: 'r45,10,10s1,1,100,100r45s0.5t-18,-99'},
+                  1000, function () {
+                    major.animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T0,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-190,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T190,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T0,190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T190,190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T190,-190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-190,-190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T0,-190').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
                   });
   };
 
@@ -587,15 +718,118 @@ function patternOne(paper, sqTile) {
       lines.animate({opacity: 0}, 1000, finalAnimation);
     };
   };
-
-
   animLines();
   return 0;
 };
+
+function patternThree(paper, sqTile) {
+  paper.elementOpacity = 0.0;
+  var c0 = paper.circle(sqTile.x_center, sqTile.y_center, sqTile.radius);
+  var topX = sqTile.topX;
+  var topY = sqTile.topY;
+  var bottomX = sqTile.bottomX;
+  var bottomY = sqTile.bottomY;
+  var radius = sqTile.radius;
+
+  paper.line(topX + radius, topY, topX + radius, bottomY);
+  var t1 = paper.line(topX, topY + radius, bottomX, topY + radius);
+  paper.circle(topX + radius, topY, radius);
+  paper.circle(topX + radius, bottomY, radius);
+  paper.circle(topX, topY + radius, radius);
+  paper.circle(bottomX, topY + radius, radius);
+  paper.line(c0.__intersectpoints__[1], c0.__intersectpoints__[10]);
+  paper.line(c0.__intersectpoints__[2], c0.__intersectpoints__[9]);
+  var t2 = paper.line(c0.__intersectpoints__[3], c0.__intersectpoints__[8]);
+  var t3 = paper.line(c0.__intersectpoints__[4], c0.__intersectpoints__[7]);
+  paper.line(c0.__intersectpoints__[1], c0.__intersectpoints__[2]);
+  var j6 = paper.line(c0.__intersectpoints__[1], c0.__intersectpoints__[6]);
+  var j7 = paper.line(c0.__intersectpoints__[3], c0.__intersectpoints__[7]);
+  var j3 = paper.line(c0.__intersectpoints__[7], c0.__intersectpoints__[11]);
+  var j4 = paper.line(c0.__intersectpoints__[7], c0.__intersectpoints__[11]);
+  paper.line(c0.__intersectpoints__[12], c0.__intersectpoints__[14]);
+  paper.line(c0.__intersectpoints__[12], c0.__intersectpoints__[2]);
+  paper.line(c0.__intersectpoints__[12], c0.__intersectpoints__[6]);
+  paper.line(c0.__intersectpoints__[2], c0.__intersectpoints__[6]);
+  paper.line(c0.__intersectpoints__[17], c0.__intersectpoints__[8]);
+  paper.line(c0.__intersectpoints__[17], c0.__intersectpoints__[4]);
+  paper.line(c0.__intersectpoints__[4], c0.__intersectpoints__[8]);
+  var j0 = paper.extendedLine(sqTile, t1.__intersectpoints__[3], t3.__intersectpoints__[7]);
+  var j1 = paper.extendedLine(sqTile, t1.__intersectpoints__[3], t2.__intersectpoints__[9]);
+  paper.extendedLine(sqTile, t3.__intersectpoints__[8], t2.__intersectpoints__[9]);
+  var j2 = paper.extendedLine(sqTile, t1.__intersectpoints__[6], t3.__intersectpoints__[3]);
+  var j5 = paper.extendedLine(sqTile, t1.__intersectpoints__[6], t2.__intersectpoints__[4]);
+  paper.extendedLine(sqTile, t3.__intersectpoints__[3], t2.__intersectpoints__[4]);
+  // BoldLine
+  paper.boldLine(j0.__intersectpoints__[2], j3.__intersectpoints__[3]);
+  paper.boldLine(j1.__intersectpoints__[2], j4.__intersectpoints__[3]);
+  paper.boldLine(j1.__intersectpoints__[13], j0.__intersectpoints__[13]);
+
+  paper.boldLine(j5.__intersectpoints__[3], j2.__intersectpoints__[3]);
+  paper.boldLine(j7.__intersectpoints__[6], j5.__intersectpoints__[14]);
+  paper.boldLine(j6.__intersectpoints__[6], j2.__intersectpoints__[14]);
+  // Animation
+  var lines = paper.set();
+  paper.__circles__.forEach(function(elem) {
+    lines.push(elem);
+  });
+  var animateIndex = 0;
+  var animLines = function() {
+    if (animateIndex < paper.__circles__.length) {
+      paper.__circles__[animateIndex++].animate({ opacity: '1'}, 20, animLines);
+    } else {
+      animBold();
+    }
+  };
+  var allPaths = '';
+  paper.__boldlines__.forEach(function(elem) {
+    allPaths += elem.getActualPathString();
+  });
+  var major = paper.path(allPaths).hide();
+  var majorLen = major.getTotalLength();
+  var animateLength = 0;
+  var partialPaths = paper.set();
+  var finalAnimation = function() {
+    major.attr('stroke', 'red').attr('stroke-width', 3).show();
+    partialPaths.forEach(function(elem) { elem.remove();});
+    major.animate({transform: 'r45,10,10s1,1,100,100r135s0.5t0, 117'},
+                  1000, function () {
+                    major.animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T0,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-160,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-320,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T160,0').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-80,140').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T80,140').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T80,-140').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-240,-140').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                    major.clone().transform('s0.5T-80,-140').animate({fill: "#223fa3", stroke: "#000", "stroke-width": 10, "stroke-opacity": 0.5}, 2000);
+                  });
+  };
+
+  var animBold = function() {
+    if (animateLength < 1.0) {
+      animateLength += 0.05;
+      var subpath = major.getSubpath(0, animateLength * majorLen);
+      partialPaths.push(paper.path(subpath).attr('stroke', 'red').attr('stroke-width', 3));
+      setTimeout(animBold, 20);
+    } else {
+      lines.animate({opacity: 0}, 1000, finalAnimation);
+    };
+  };
+  animLines();
+  return 0;
+}
+
 
 // Transformations on line
 // Decide on whether to update on transformation or on actualAttr
 // Rename __Circles__ to __shapes__
 // When you transform, intersections change
-// Always sort intersection points by X, so that you can save pivot math.
+// (Done)Always sort intersection points by X, so that you can save pivot math.
 // When three lines intersect, they should always be on the same point and not create a new point
+// Instead of resorting, should always insert the right place
+// Too many intersection points on first pattern
+// Make animation into a function
+// Add 4 more patterns
+// Should I also make templates?
+// Line segments should not intersect outside of the box.
