@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Welcome to Project Agama Test!"
+title:  "Experiment 1"
 date:   2015-09-26 10:29:53
 categories: Project Agama First Experiment
 ---
@@ -8,9 +8,9 @@ categories: Project Agama First Experiment
 
 
 <script>
-var winInfo = AgamaCY.getWidthHeight(document, 'outgraph');
-var paper =  Raphael('outgraph', winInfo.width, winInfo.height);
-var sqInfo = AgamaCY.getSquareCoorInMiddle(winInfo, 10);
+var winInfo = Agama.getWidthHeight(document, 'outgraph');
+var paper =  new Agama('outgraph', winInfo.width, winInfo.height);
+var sqInfo = Agama.getSquareCoorInMiddle(winInfo, 10);
 var sqTile = paper.getSquareTile(sqInfo.topX, sqInfo.topY,
                                  sqInfo.bottomX, sqInfo.bottomY);
 var t = patternOne(paper, sqTile);
